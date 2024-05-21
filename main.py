@@ -35,9 +35,36 @@ while True:
         object_height = (y+h) - y
         object_width = (x+w) - x
 
+        # Calculate distance using object size in the frame and actual dimensions
         distance = (object_height * drone_height) / drone_height
 
         cv2.putText(img, f"Estimated Distance: {int(distance)}m", (10,30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+
+        # Variables for speed estimation
+        past_distances = []  # Stores distances from previous frames
+        past_frames = 5  # Number of frames to consider for speed estimation
+        fps = 30
+        # frame_count = 0
+
+        def estimate_speed(current_distance, frame_count, fps):
+            if len(past_distances) == frame_count:
+                # Calculate speed based on average distance change in past frames
+                total_distance_change = current_distance - past_distances[0]
+                time_elapsed = frame_count / fps
+                speed_estimate = total_distance_change / time_elapsed
+                return speed_estimate
+            else:
+                past_distances.append(current_distance)
+                return None  # Not enough data for reliable speed estimation yet
+
+        # Update past_distances list and frame count for next iteration
+        frame_count = past_frames + 1
+        speed = estimate_speed(distance, frame_count, fps)
+        if speed:
+            cv2.putText(img, f"Speed: {speed:.2f} m/s", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        
+        
+        
 
     # To open camera. It need camera window name and video
     cv2.imshow("Face", img)
